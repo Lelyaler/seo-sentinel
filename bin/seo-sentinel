@@ -1,0 +1,85 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/../src/autoload.php';
+
+use SeoSentinel\Service\AuditService;
+use SeoSentinel\Exception\SeoException;
+
+$args = $argv;
+array_shift($args); // Remove script path
+
+$command = $args[0] ?? 'help';
+
+if ($command === 'help' || empty($args)) {
+    echo "\n\033[1;36m=== SEO Sentinel CLI Tool ===\033[0m\n\n";
+    echo "Использование:\n";
+    echo "  php bin/seo-sentinel analyze <URL> [--keyword=\"ключевой запрос\"]\n\n";
+    echo "Пример:\n";
+    echo "  php bin/seo-sentinel analyze https://wordpress.org --keyword=\"cms wordpress\"\n\n";
+    exit(0);
+}
+
+if ($command === 'analyze') {
+    $url = $args[1] ?? '';
+    if (empty($url)) {
+        echo "\033[1;31mОшибка: Укажите целевой URL для анализа.\033[0m\n";
+        exit(1);
+    }
+
+    $keyword = '';
+    for ($i = 2; $i < count($args); $i++) {
+        if (str_starts_with($args[$i], '--keyword=')) {
+            $keyword = substr($args[$i], 10);
+        } elseif ($args[$i] === '--keyword' && isset($args[$i + 1])) {
+            $keyword = $args[++$i];
+        }
+    }
+
+    echo "\n\033[1;33m[1/3] Запуск аудита для: \033[0m{$url}...\n";
+    if ($keyword) {
+        echo "\033[1;33m[2/3] Ключевой запрос: \033[0m\"{$keyword}\"\n";
+    }
+
+    $service = new AuditService();
+
+    try {
+        $result = $service->runAudit($url, $keyword);
+        echo "\033[1;32m[3/3] Аудит успешно завершен!\033[0m\n\n";
+
+        echo "---------------------------------------------------------\n";
+        echo "\033[1;37mОБЩИЕ ПОКАЗАТЕЛИ:\033[0m\n";
+        echo "  • Общий SEO Health Score:  \033[1;32m{$result['scores']['seo_health_score']}/100\033[0m\n";
+        echo "  • Индекс AI Search (GEO):  \033[1;34m{$result['scores']['geo_ai_score']}/100\033[0m ({$result['scores']['geo_grade']})\n";
+        echo "  • Время отклика сервера:   {$result['meta']['load_time_seconds']} сек\n";
+        echo "---------------------------------------------------------\n";
+
+        echo "\033[1;37mМЕТА-ДАННЫЕ И ТЕГИ:\033[0m\n";
+        echo "  • Title:  \"{$result['page']['title']['text']}\" ({$result['page']['title']['length']} симв.) [{$result['page']['title']['status']}]\n";
+        echo "  • Desc:   \"{$result['page']['meta_description']['text']}\" ({$result['page']['meta_description']['length']} симв.) [{$result['page']['meta_description']['status']}]\n";
+        echo "  • H1:     " . (empty($result['page']['headings']['h1']) ? "\033[1;31mОтсутствует!\033[0m" : implode(', ', $result['page']['headings']['h1'])) . "\n";
+        echo "  • Слов:   {$result['page']['content']['word_count']} (Бенчмарк: {$result['competitors_gap']['benchmark']['target_word_count']})\n";
+        echo "  • Изображения: {$result['page']['images']['total']} (Без ALT: \033[1;33m{$result['page']['images']['missing_alt']}\033[0m)\n";
+        echo "  • Schema.org: " . ($result['page']['schema']['has_schema'] ? "\033[1;32mНайдено ({$result['page']['schema']['count']} схем)\033[0m" : "\033[1;31mОтсутствует\033[0m") . "\n";
+        echo "---------------------------------------------------------\n";
+
+        if (!empty($result['competitors_gap']['content_gap']['missing_sections'])) {
+            echo "\033[1;35mПРОПУЩЕННЫЕ БЛОКИ (CONTENT GAP):\033[0m\n";
+            foreach ($result['competitors_gap']['content_gap']['missing_sections'] as $sec) {
+                echo "  [-] " . strtoupper($sec['key']) . " -> {$sec['importance']}\n";
+            }
+            echo "---------------------------------------------------------\n";
+        }
+
+        echo "\033[1;36mРЕКОМЕНДАЦИИ GEO ДЛЯ AI-ПОИСКА (Perplexity / ChatGPT):\033[0m\n";
+        foreach ($result['geo_readiness']['recommendations'] as $rec) {
+            echo "  👉 {$rec}\n";
+        }
+        echo "\n";
+
+    } catch (SeoException $e) {
+        echo "\033[1;31mОшибка анализа: {$e->getMessage()}\033[0m\n";
+        exit(1);
+    }
+}
