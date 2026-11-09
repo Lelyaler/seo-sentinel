@@ -8,6 +8,7 @@ use SeoSentinel\Analyzer\PageCrawler;
 use SeoSentinel\Evaluator\GeoScorer;
 use SeoSentinel\Generator\SchemaGenerator;
 use SeoSentinel\Http\Client;
+use SeoSentinel\Exception\SeoException;
 
 class AuditService
 {
@@ -27,28 +28,62 @@ class AuditService
     }
 
     /**
-     * Run full end-to-end SEO & GEO audit
+     * Run full end-to-end SEO & GEO audit by URL
      *
      * @param string $url
      * @param string $keyword
      * @return array<string, mixed>
+     * @throws SeoException
      */
     public function runAudit(string $url, string $keyword): array
     {
-        // 1. Fetch HTML
         $response = $this->httpClient->get($url);
         $html = $response['content'];
         $finalUrl = $response['final_url'];
         $loadTime = $response['total_time'];
 
-        // 2. Parse Page DOM
+        return $this->processAudit($html, $url, $finalUrl, $keyword, $loadTime, 'live_crawler');
+    }
+
+    /**
+     * Run audit from raw HTML string (for Cloudflare bypass or local staging)
+     *
+     * @param string $html
+     * @param string $url
+     * @param string $keyword
+     * @return array<string, mixed>
+     */
+    public function runAuditFromHtml(string $html, string $url, string $keyword): array
+    {
+        $cleanUrl = !empty($url) ? $url : 'https://example.com/custom-page';
+        return $this->processAudit($html, $cleanUrl, $cleanUrl, $keyword, 0.05, 'manual_html');
+    }
+
+    /**
+     * @param string $html
+     * @param string $targetUrl
+     * @param string $finalUrl
+     * @param string $keyword
+     * @param float $loadTime
+     * @param string $sourceMode
+     * @return array<string, mixed>
+     */
+    private function processAudit(
+        string $html,
+        string $targetUrl,
+        string $finalUrl,
+        string $keyword,
+        float $loadTime,
+        string $sourceMode
+    ): array {
+        // 1. Parse Page DOM
         $pageData = $this->crawler->analyze($html, $finalUrl);
         $pageData['load_time'] = $loadTime;
 
-        // 3. Competitor & Content Gap Analysis
+        // 2. Competitor & Content Gap Analysis
         $competitorData = $this->competitorAnalyzer->analyze($pageData, $keyword);
 
-        // 4. Generate Schema.org JSON-LD
+        // 3. Generate Schema.org JSON-LD
         $schemaData = $this->schemaGenerator->generate(
             $finalUrl,
             $pageData['title']['text'] ?? '',
@@ -56,19 +91,20 @@ class AuditService
             $keyword
         );
 
-        // 5. GEO & AI Readiness Scoring
+        // 4. GEO & AI Readiness Scoring
         $geoData = $this->geoScorer->evaluate($pageData, $keyword);
 
-        // 6. Overall SEO Health Score calculation (0 - 100)
+        // 5. Overall SEO Health Score calculation (0 - 100)
         $seoScore = $this->calculateOverallScore($pageData, $competitorData);
 
         return [
             'meta' => [
-                'target_url' => $url,
+                'target_url' => $targetUrl,
                 'final_url' => $finalUrl,
                 'keyword' => $keyword,
                 'analyzed_at' => date('Y-m-d H:i:s'),
                 'load_time_seconds' => $loadTime,
+                'source_mode' => $sourceMode,
             ],
             'scores' => [
                 'seo_health_score' => $seoScore,

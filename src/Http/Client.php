@@ -29,6 +29,8 @@ class Client
         }
 
         $ch = curl_init();
+        $responseHeaders = [];
+
         curl_setopt_array($ch, [
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
@@ -37,13 +39,30 @@ class Client
             CURLOPT_TIMEOUT => $this->timeout,
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_USERAGENT => $this->userAgent,
-            CURLOPT_ENCODING => '', // supports all encodings (gzip, deflate, br)
+            CURLOPT_ENCODING => '', // supports gzip, deflate, br
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_2_0,
             CURLOPT_HTTPHEADER => [
                 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
                 'Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Sec-Ch-Ua: "Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
+                'Sec-Ch-Ua-Mobile: ?0',
+                'Sec-Ch-Ua-Platform: "Windows"',
+                'Sec-Fetch-Dest: document',
+                'Sec-Fetch-Mode: navigate',
+                'Sec-Fetch-Site: none',
+                'Sec-Fetch-User: ?1',
+                'Upgrade-Insecure-Requests: 1',
             ],
+            CURLOPT_HEADERFUNCTION => function ($curl, $header) use (&$responseHeaders) {
+                $len = strlen($header);
+                $parts = explode(':', $header, 2);
+                if (count($parts) === 2) {
+                    $responseHeaders[strtolower(trim($parts[0]))] = trim($parts[1]);
+                }
+                return $len;
+            },
         ]);
 
         $content = curl_exec($ch);
@@ -55,6 +74,17 @@ class Client
 
         if ($content === false || !is_string($content)) {
             throw new SeoException("Ошибка соединения с сайтом: {$error}");
+        }
+
+        // Check for Cloudflare / Anti-Bot blocks
+        $isCloudflare = isset($responseHeaders['server']) && str_contains(strtolower($responseHeaders['server']), 'cloudflare');
+        $isCfMitigated = isset($responseHeaders['cf-mitigated']) || isset($responseHeaders['cf-ray']);
+
+        if ($status === 403 && ($isCloudflare || $isCfMitigated || str_contains($content, 'challenges.cloudflare.com'))) {
+            throw new SeoException(
+                "Сайт защищен системой Cloudflare WAF (антибот-проверка 'Managed Challenge').\n" .
+                "Сервер блокирует автоматические сканеры. Воспользуйтесь режимом 'Вставить HTML код вручную'."
+            );
         }
 
         if ($status >= 400) {

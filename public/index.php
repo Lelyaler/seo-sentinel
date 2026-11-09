@@ -6,17 +6,24 @@ require_once __DIR__ . '/../src/autoload.php';
 use SeoSentinel\Service\AuditService;
 use SeoSentinel\Exception\SeoException;
 
+$mode = filter_input(INPUT_POST, 'mode', FILTER_DEFAULT) ?: 'url';
 $targetUrl = filter_input(INPUT_POST, 'url', FILTER_SANITIZE_URL) ?: filter_input(INPUT_GET, 'url', FILTER_SANITIZE_URL) ?: '';
+$rawHtml = filter_input(INPUT_POST, 'raw_html', FILTER_DEFAULT) ?: '';
 $keyword = filter_input(INPUT_POST, 'keyword', FILTER_DEFAULT) ?: filter_input(INPUT_GET, 'keyword', FILTER_DEFAULT) ?: '';
 $isApi = isset($_GET['api']) || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
 
 $auditResult = null;
 $error = null;
 
-if (!empty($targetUrl)) {
+if (!empty($targetUrl) || !empty($rawHtml)) {
     try {
         $service = new AuditService();
-        $auditResult = $service->runAudit($targetUrl, (string)$keyword);
+
+        if ($mode === 'html' && !empty($rawHtml)) {
+            $auditResult = $service->runAuditFromHtml($rawHtml, $targetUrl, (string)$keyword);
+        } else {
+            $auditResult = $service->runAudit($targetUrl, (string)$keyword);
+        }
 
         if ($isApi) {
             header('Content-Type: application/json; charset=utf-8');
@@ -103,6 +110,7 @@ if (!empty($targetUrl)) {
         <!-- Input Form Card -->
         <section class="bg-gradient-to-b from-slate-900 to-slate-900/40 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
             <div class="absolute -right-20 -top-20 w-80 h-80 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            
             <div class="max-w-3xl space-y-3">
                 <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                     Глубокий аудит готовности к <span class="bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent">Google & AI-поиску</span>
@@ -112,29 +120,77 @@ if (!empty($targetUrl)) {
                 </p>
             </div>
 
-            <form method="POST" action="/" class="mt-6 grid grid-cols-1 md:grid-cols-12 gap-3">
-                <div class="md:col-span-7">
-                    <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Целевой URL страницы</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+            <!-- Mode Switcher -->
+            <div class="mt-6 inline-flex p-1 bg-slate-950 border border-slate-800 rounded-xl">
+                <button type="button" onclick="setMode('url')" id="btn-mode-url" class="px-4 py-2 rounded-lg text-xs font-semibold transition <?= $mode === 'url' ? 'bg-brand-600 text-white shadow' : 'text-slate-400 hover:text-white' ?>">
+                    🌐 По URL адресу
+                </button>
+                <button type="button" onclick="setMode('html')" id="btn-mode-html" class="px-4 py-2 rounded-lg text-xs font-semibold transition <?= $mode === 'html' ? 'bg-brand-600 text-white shadow' : 'text-slate-400 hover:text-white' ?>">
+                    📋 Вставить HTML код (для Cloudflare)
+                </button>
+            </div>
+
+            <form method="POST" action="/" id="audit-form" class="mt-5 space-y-4">
+                <input type="hidden" name="mode" id="input-mode" value="<?= htmlspecialchars($mode, ENT_QUOTES, 'UTF-8') ?>">
+
+                <!-- URL Mode Container -->
+                <div id="mode-url-container" class="<?= $mode === 'html' ? 'hidden' : '' ?> grid grid-cols-1 md:grid-cols-12 gap-3">
+                    <div class="md:col-span-7">
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Целевой URL страницы</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                            </div>
+                            <input type="url" name="url" id="input-url" placeholder="https://example.com/services/web-dev" value="<?= htmlspecialchars($targetUrl, ENT_QUOTES, 'UTF-8') ?>"
+                                   class="w-full pl-10 pr-4 py-3 bg-slate-950/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
                         </div>
-                        <input type="url" name="url" required placeholder="https://example.com/services/web-dev" value="<?= htmlspecialchars($targetUrl, ENT_QUOTES, 'UTF-8') ?>"
-                               class="w-full pl-10 pr-4 py-3 bg-slate-950/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
+                    </div>
+
+                    <div class="md:col-span-3">
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Ключевой запрос (SEO)</label>
+                        <input type="text" name="keyword" placeholder="разработка сайтов" value="<?= htmlspecialchars($keyword, ENT_QUOTES, 'UTF-8') ?>"
+                               class="w-full px-4 py-3 bg-slate-950/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
+                    </div>
+
+                    <div class="md:col-span-2 flex items-end">
+                        <button type="submit" class="w-full py-3 px-4 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-brand-500/25 transition active:scale-[0.98] flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            Анализ
+                        </button>
                     </div>
                 </div>
 
-                <div class="md:col-span-3">
-                    <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Ключевой запрос (SEO)</label>
-                    <input type="text" name="keyword" placeholder="разработка сайтов" value="<?= htmlspecialchars($keyword, ENT_QUOTES, 'UTF-8') ?>"
-                           class="w-full px-4 py-3 bg-slate-950/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
-                </div>
+                <!-- Raw HTML Mode Container -->
+                <div id="mode-html-container" class="<?= $mode === 'html' ? '' : 'hidden' ?> space-y-4">
+                    <div class="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-xs text-indigo-300 flex items-center gap-2">
+                        <span>💡 <strong>Как использовать:</strong> Откройте сайт в обычном браузере, нажмите <code>Ctrl+U</code> (или View Page Source), скопируйте весь HTML и вставьте ниже.</span>
+                    </div>
 
-                <div class="md:col-span-2 flex items-end">
-                    <button type="submit" class="w-full py-3 px-4 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-brand-500/25 transition active:scale-[0.98] flex items-center justify-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        Анализ
-                    </button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">URL страницы (опционально, для канонических ссылок)</label>
+                            <input type="text" name="url_custom" id="input-url-custom" placeholder="https://xn--80aancyeh2afw.xn--p1ai/" value="<?= htmlspecialchars($targetUrl, ENT_QUOTES, 'UTF-8') ?>"
+                                   class="w-full px-4 py-2.5 bg-slate-950/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Ключевой запрос (SEO)</label>
+                            <input type="text" name="keyword_custom" id="input-kw-custom" placeholder="купить мебель" value="<?= htmlspecialchars($keyword, ENT_QUOTES, 'UTF-8') ?>"
+                                   class="w-full px-4 py-2.5 bg-slate-950/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Исходный HTML код страницы</label>
+                        <textarea name="raw_html" rows="7" placeholder="<!DOCTYPE html><html><head><title>...</title></head><body>...</body></html>"
+                                  class="w-full p-4 bg-slate-950/90 border border-slate-700 rounded-xl text-xs font-mono text-slate-300 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 transition custom-scrollbar"><?= htmlspecialchars($rawHtml, ENT_QUOTES, 'UTF-8') ?></textarea>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="py-3 px-8 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-brand-500/25 transition active:scale-[0.98] flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            Запустить аудит по HTML
+                        </button>
+                    </div>
                 </div>
             </form>
 
@@ -147,13 +203,29 @@ if (!empty($targetUrl)) {
         </section>
 
         <?php if ($error): ?>
-            <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center gap-3">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></span>
+            <div class="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm space-y-3">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div class="space-y-1">
+                        <h4 class="font-bold text-rose-200">Блокировка доступа</h4>
+                        <p class="whitespace-pre-line text-xs leading-relaxed text-rose-300/90"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
+                    </div>
+                </div>
+                <div class="pl-8 pt-1">
+                    <button type="button" onclick="setMode('html')" class="px-3.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-semibold text-xs transition border border-rose-500/30">
+                        Переключиться на вставку HTML кода ➔
+                    </button>
+                </div>
             </div>
         <?php endif; ?>
 
         <?php if ($auditResult): ?>
+            <!-- Source Mode Badge -->
+            <div class="flex items-center justify-between text-xs text-slate-400 pb-2">
+                <span>Источник: <span class="text-white font-medium"><?= $auditResult['meta']['source_mode'] === 'manual_html' ? 'Вручную скопированный HTML' : 'Прямой краулинг по URL' ?></span></span>
+                <span>Время анализа: <span class="text-white font-medium"><?= $auditResult['meta']['load_time_seconds'] ?> сек</span></span>
+            </div>
+
             <!-- Score Cards Overview -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- Card 1: Overall SEO Score -->
@@ -456,8 +528,50 @@ if (!empty($targetUrl)) {
 
     <!-- Scripts -->
     <script>
+        function setMode(mode) {
+            document.getElementById('input-mode').value = mode;
+            const urlContainer = document.getElementById('mode-url-container');
+            const htmlContainer = document.getElementById('mode-html-container');
+            const btnUrl = document.getElementById('btn-mode-url');
+            const btnHtml = document.getElementById('btn-mode-html');
+
+            if (mode === 'html') {
+                urlContainer.classList.add('hidden');
+                htmlContainer.classList.remove('hidden');
+                btnUrl.classList.remove('bg-brand-600', 'text-white', 'shadow');
+                btnUrl.classList.add('text-slate-400');
+                btnHtml.classList.add('bg-brand-600', 'text-white', 'shadow');
+                btnHtml.classList.remove('text-slate-400');
+
+                // Sync inputs if available
+                const val = document.getElementById('input-url').value;
+                if (val && !document.getElementById('input-url-custom').value) {
+                    document.getElementById('input-url-custom').value = val;
+                }
+            } else {
+                urlContainer.classList.remove('hidden');
+                htmlContainer.classList.add('hidden');
+                btnHtml.classList.remove('bg-brand-600', 'text-white', 'shadow');
+                btnHtml.classList.add('text-slate-400');
+                btnUrl.classList.add('bg-brand-600', 'text-white', 'shadow');
+                btnUrl.classList.remove('text-slate-400');
+            }
+        }
+
+        // Before submit, sync fields if in html mode
+        document.getElementById('audit-form').addEventListener('submit', function() {
+            const mode = document.getElementById('input-mode').value;
+            if (mode === 'html') {
+                const customUrl = document.getElementById('input-url-custom').value;
+                const customKw = document.getElementById('input-kw-custom').value;
+                if (customUrl) document.getElementById('input-url').value = customUrl;
+                if (customKw) document.querySelector('input[name="keyword"]').value = customKw;
+            }
+        });
+
         function setSample(url, kw) {
-            document.querySelector('input[name="url"]').value = url;
+            setMode('url');
+            document.getElementById('input-url').value = url;
             document.querySelector('input[name="keyword"]').value = kw;
         }
 
