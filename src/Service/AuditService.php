@@ -6,7 +6,10 @@ namespace SeoSentinel\Service;
 use SeoSentinel\Analyzer\CompetitorAnalyzer;
 use SeoSentinel\Analyzer\PageCrawler;
 use SeoSentinel\Evaluator\GeoScorer;
+use SeoSentinel\Generator\CopywriterBriefGenerator;
 use SeoSentinel\Generator\SchemaGenerator;
+use SeoSentinel\Generator\SerpPreviewData;
+use SeoSentinel\Generator\WordPressIntegrationGenerator;
 use SeoSentinel\Http\Client;
 use SeoSentinel\Exception\SeoException;
 
@@ -17,6 +20,9 @@ class AuditService
     private CompetitorAnalyzer $competitorAnalyzer;
     private SchemaGenerator $schemaGenerator;
     private GeoScorer $geoScorer;
+    private CopywriterBriefGenerator $briefGenerator;
+    private WordPressIntegrationGenerator $wpGenerator;
+    private SerpPreviewData $serpPreview;
 
     public function __construct()
     {
@@ -25,6 +31,9 @@ class AuditService
         $this->competitorAnalyzer = new CompetitorAnalyzer();
         $this->schemaGenerator = new SchemaGenerator();
         $this->geoScorer = new GeoScorer();
+        $this->briefGenerator = new CopywriterBriefGenerator();
+        $this->wpGenerator = new WordPressIntegrationGenerator();
+        $this->serpPreview = new SerpPreviewData();
     }
 
     /**
@@ -80,21 +89,28 @@ class AuditService
         $pageData = $this->crawler->analyze($html, $finalUrl);
         $pageData['load_time'] = $loadTime;
 
+        $title = $pageData['title']['text'] ?? '';
+        $desc = $pageData['meta_description']['text'] ?? '';
+
         // 2. Competitor & Content Gap Analysis
         $competitorData = $this->competitorAnalyzer->analyze($pageData, $keyword);
 
         // 3. Generate Schema.org JSON-LD
-        $schemaData = $this->schemaGenerator->generate(
-            $finalUrl,
-            $pageData['title']['text'] ?? '',
-            $pageData['meta_description']['text'] ?? '',
-            $keyword
-        );
+        $schemaData = $this->schemaGenerator->generate($finalUrl, $title, $desc, $keyword);
 
         // 4. GEO & AI Readiness Scoring
         $geoData = $this->geoScorer->evaluate($pageData, $keyword);
 
-        // 5. Overall SEO Health Score calculation (0 - 100)
+        // 5. SERP Preview Simulation
+        $serpData = $this->serpPreview->generate($finalUrl, $title, $desc);
+
+        // 6. Copywriter Brief & AI Prompt
+        $briefData = $this->briefGenerator->generate($keyword, $title, $pageData, $competitorData);
+
+        // 7. WordPress Integration Snippets
+        $wpData = $this->wpGenerator->generate($finalUrl, $schemaData);
+
+        // 8. Overall SEO Health Score calculation (0 - 100)
         $seoScore = $this->calculateOverallScore($pageData, $competitorData);
 
         return [
@@ -112,9 +128,12 @@ class AuditService
                 'geo_grade' => $geoData['grade'],
             ],
             'page' => $pageData,
+            'serp_preview' => $serpData,
             'competitors_gap' => $competitorData,
             'schema_generated' => $schemaData,
             'geo_readiness' => $geoData,
+            'copywriter_brief' => $briefData,
+            'wordpress_integration' => $wpData,
         ];
     }
 

@@ -74,12 +74,22 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+        @media print {
+            header, form, footer, .no-print, button { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .tab-pane { display: block !important; }
+            .bg-slate-900, .bg-slate-950 { background: white !important; border: 1px solid #e2e8f0 !important; color: black !important; }
+            .text-white { color: #0f172a !important; }
+            .text-slate-400, .text-slate-300 { color: #475569 !important; }
+            pre { background: #f8fafc !important; color: #0f172a !important; border: 1px solid #cbd5e1 !important; }
+        }
     </style>
 </head>
 <body class="min-h-full flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
 
     <!-- Header Navigation -->
-    <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur sticky top-0 z-50">
+    <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur sticky top-0 z-50 no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-emerald-400 p-[1px] shadow-lg shadow-brand-500/20">
@@ -95,7 +105,13 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
                     <p class="text-xs text-slate-400">Мультиагентный SEO-аудитор & Генератор Schema.org</p>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
+                <?php if ($auditResult): ?>
+                    <button onclick="window.print()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        Экспорт в PDF / Печать
+                    </button>
+                <?php endif; ?>
                 <span class="inline-flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                     PHP 8.2 Engine Active
@@ -108,7 +124,7 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
         <!-- Input Form Card -->
-        <section class="bg-gradient-to-b from-slate-900 to-slate-900/40 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+        <section class="bg-gradient-to-b from-slate-900 to-slate-900/40 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden no-print">
             <div class="absolute -right-20 -top-20 w-80 h-80 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
             
             <div class="max-w-3xl space-y-3">
@@ -168,8 +184,8 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">URL страницы (опционально, для канонических ссылок)</label>
-                            <input type="text" name="url_custom" id="input-url-custom" placeholder="https://xn--80aancyeh2afw.xn--p1ai/" value="<?= htmlspecialchars($targetUrl, ENT_QUOTES, 'UTF-8') ?>"
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">URL страницы (для канонических ссылок)</label>
+                            <input type="text" name="url_custom" id="input-url-custom" placeholder="https://example.com/page" value="<?= htmlspecialchars($targetUrl, ENT_QUOTES, 'UTF-8') ?>"
                                    class="w-full px-4 py-2.5 bg-slate-950/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
                         </div>
                         <div>
@@ -181,7 +197,7 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Исходный HTML код страницы</label>
-                        <textarea name="raw_html" rows="7" placeholder="<!DOCTYPE html><html><head><title>...</title></head><body>...</body></html>"
+                        <textarea name="raw_html" rows="6" placeholder="<!DOCTYPE html><html><head><title>...</title></head><body>...</body></html>"
                                   class="w-full p-4 bg-slate-950/90 border border-slate-700 rounded-xl text-xs font-mono text-slate-300 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 transition custom-scrollbar"><?= htmlspecialchars($rawHtml, ENT_QUOTES, 'UTF-8') ?></textarea>
                     </div>
 
@@ -220,10 +236,15 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
         <?php endif; ?>
 
         <?php if ($auditResult): ?>
-            <!-- Source Mode Badge -->
-            <div class="flex items-center justify-between text-xs text-slate-400 pb-2">
-                <span>Источник: <span class="text-white font-medium"><?= $auditResult['meta']['source_mode'] === 'manual_html' ? 'Вручную скопированный HTML' : 'Прямой краулинг по URL' ?></span></span>
-                <span>Время анализа: <span class="text-white font-medium"><?= $auditResult['meta']['load_time_seconds'] ?> сек</span></span>
+            <!-- Report Meta & Print Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 pb-2 border-b border-slate-800/60 gap-2">
+                <div>
+                    Отчет аудита для: <strong class="text-white"><?= htmlspecialchars($auditResult['meta']['final_url'], ENT_QUOTES, 'UTF-8') ?></strong>
+                    <?php if ($auditResult['meta']['keyword']): ?>
+                        | Запрос: <span class="text-brand-400 font-semibold">«<?= htmlspecialchars($auditResult['meta']['keyword'], ENT_QUOTES, 'UTF-8') ?>»</span>
+                    <?php endif; ?>
+                </div>
+                <div>Дата: <span class="text-slate-200"><?= $auditResult['meta']['analyzed_at'] ?></span></div>
             </div>
 
             <!-- Score Cards Overview -->
@@ -288,23 +309,74 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
                 </div>
             </div>
 
+            <!-- Live SERP Preview Section -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <span>🔍 Симуляция сниппета в поисковой выдаче</span>
+                        </h3>
+                        <p class="text-xs text-slate-400">Как страница отображается реальным пользователям в результатах поиска Google и Яндекса.</p>
+                    </div>
+                    <div class="inline-flex p-1 bg-slate-950 border border-slate-800 rounded-lg text-xs">
+                        <button type="button" onclick="switchSerp('google')" id="btn-serp-google" class="px-3 py-1 font-semibold rounded bg-brand-600 text-white">Google</button>
+                        <button type="button" onclick="switchSerp('yandex')" id="btn-serp-yandex" class="px-3 py-1 font-semibold rounded text-slate-400 hover:text-white">Яндекс</button>
+                    </div>
+                </div>
+
+                <!-- Google Snippet Card -->
+                <div id="serp-google-card" class="p-5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5 max-w-2xl font-sans">
+                    <div class="flex items-center gap-2 text-xs text-slate-400">
+                        <div class="w-4 h-4 rounded-full bg-slate-800 flex items-center justify-center text-[10px]">🌐</div>
+                        <span class="text-emerald-400 truncate"><?= htmlspecialchars($auditResult['serp_preview']['google']['breadcrumb'], ENT_QUOTES, 'UTF-8') ?></span>
+                    </div>
+                    <h4 class="text-lg text-indigo-400 hover:underline cursor-pointer font-medium leading-snug">
+                        <?= htmlspecialchars($auditResult['serp_preview']['google']['title'], ENT_QUOTES, 'UTF-8') ?>
+                    </h4>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        <?= htmlspecialchars($auditResult['serp_preview']['google']['description'], ENT_QUOTES, 'UTF-8') ?>
+                    </p>
+                    <?php if ($auditResult['serp_preview']['google']['is_title_truncated']): ?>
+                        <div class="pt-2 text-[11px] text-amber-400 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            Заголовок Title превышает 60 символов (фактически: <?= $auditResult['serp_preview']['google']['orig_title_len'] ?> симв.) и обрезается в поиске Google.
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Yandex Snippet Card -->
+                <div id="serp-yandex-card" class="p-5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5 max-w-2xl font-sans hidden">
+                    <div class="text-xs text-emerald-400 truncate">
+                        <?= htmlspecialchars($auditResult['serp_preview']['yandex']['breadcrumb'], ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                    <h4 class="text-lg text-rose-400 hover:underline cursor-pointer font-medium leading-snug">
+                        <?= htmlspecialchars($auditResult['serp_preview']['yandex']['title'], ENT_QUOTES, 'UTF-8') ?>
+                    </h4>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        <?= htmlspecialchars($auditResult['serp_preview']['yandex']['description'], ENT_QUOTES, 'UTF-8') ?>
+                    </p>
+                </div>
+            </div>
+
             <!-- Tabs Navigation -->
-            <div class="border-b border-slate-800 flex gap-4 overflow-x-auto custom-scrollbar">
-                <button onclick="switchTab('tab-meta')" id="btn-tab-meta" class="tab-btn px-4 py-3 font-semibold text-sm border-b-2 border-brand-500 text-brand-400 flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <div class="border-b border-slate-800 flex gap-2 overflow-x-auto custom-scrollbar no-print">
+                <button onclick="switchTab('tab-meta')" id="btn-tab-meta" class="tab-btn px-4 py-3 font-semibold text-xs uppercase tracking-wider border-b-2 border-brand-500 text-brand-400 flex items-center gap-1.5">
                     Мета-теги и структура
                 </button>
-                <button onclick="switchTab('tab-gap')" id="btn-tab-gap" class="tab-btn px-4 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                <button onclick="switchTab('tab-gap')" id="btn-tab-gap" class="tab-btn px-4 py-3 font-semibold text-xs uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
                     Content Gap & LSI
                 </button>
-                <button onclick="switchTab('tab-schema')" id="btn-tab-schema" class="tab-btn px-4 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-                    Микроразметка Schema.org
+                <button onclick="switchTab('tab-brief')" id="btn-tab-brief" class="tab-btn px-4 py-3 font-semibold text-xs uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                    📝 ТЗ копирайтеру & AI Prompt
                 </button>
-                <button onclick="switchTab('tab-geo')" id="btn-tab-geo" class="tab-btn px-4 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-                    GEO: Готовность к AI-поиску
+                <button onclick="switchTab('tab-schema')" id="btn-tab-schema" class="tab-btn px-4 py-3 font-semibold text-xs uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                    Schema.org JSON-LD
+                </button>
+                <button onclick="switchTab('tab-wp')" id="btn-tab-wp" class="tab-btn px-4 py-3 font-semibold text-xs uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                    🔌 WordPress Интеграция
+                </button>
+                <button onclick="switchTab('tab-geo')" id="btn-tab-geo" class="tab-btn px-4 py-3 font-semibold text-xs uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                    GEO: AI-поиск
                 </button>
             </div>
 
@@ -313,9 +385,7 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Title & Description Inspection -->
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                        <h3 class="text-base font-bold text-white flex items-center gap-2">
-                            <span>Основные мета-теги</span>
-                        </h3>
+                        <h3 class="text-base font-bold text-white">Основные мета-теги</h3>
                         <!-- Title -->
                         <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
                             <div class="flex items-center justify-between text-xs">
@@ -432,6 +502,48 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
                 </div>
             </div>
 
+            <!-- Tab: Copywriter Brief & AI Prompt -->
+            <div id="tab-brief" class="tab-pane hidden space-y-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">ТЗ для копирайтера & Готовый AI-промпт (ChatGPT / Claude)</h3>
+                        <p class="text-sm text-slate-400 mt-1">Автоматически сформированное задание для устранения дефицита контента и добора LSI-фраз.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- AI Prompt Card -->
+                        <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span>
+                                    <span class="text-sm font-bold text-white">Готовый промпт для ChatGPT / Claude</span>
+                                </div>
+                                <button onclick="copySnippet('prompt-code')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                    Копировать промпт
+                                </button>
+                            </div>
+                            <pre id="prompt-code" class="p-4 bg-slate-900/90 rounded-xl text-xs font-mono text-emerald-300 whitespace-pre-wrap border border-slate-800"><?= htmlspecialchars($auditResult['copywriter_brief']['ai_prompt'], ENT_QUOTES, 'UTF-8') ?></pre>
+                        </div>
+
+                        <!-- Technical Brief Card -->
+                        <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                                    <span class="text-sm font-bold text-white">Текстовое ТЗ для автора (Markdown)</span>
+                                </div>
+                                <button onclick="copySnippet('brief-code')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 border border-slate-700">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                    Копировать Markdown
+                                </button>
+                            </div>
+                            <pre id="brief-code" class="p-4 bg-slate-900/90 rounded-xl text-xs font-mono text-slate-300 whitespace-pre-wrap border border-slate-800"><?= htmlspecialchars($auditResult['copywriter_brief']['brief_markdown'], ENT_QUOTES, 'UTF-8') ?></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Tab 3: Schema.org Generator Content -->
             <div id="tab-schema" class="tab-pane hidden space-y-6">
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
@@ -472,6 +584,33 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
                                 </button>
                             </div>
                             <pre id="service-code" class="p-4 bg-slate-900/90 rounded-xl text-xs font-mono text-indigo-300 overflow-x-auto custom-scrollbar border border-slate-800"><?= htmlspecialchars($auditResult['schema_generated']['service']['snippet'], ENT_QUOTES, 'UTF-8') ?></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: WordPress Integration -->
+            <div id="tab-wp" class="tab-pane hidden space-y-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">WordPress Интеграция (Без сторонних плагинов)</h3>
+                        <p class="text-sm text-slate-400 mt-1">Готовый оптимизированный PHP-код для внедрения разметки через хук <code>wp_head</code>.</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- functions.php code -->
+                        <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                                    <span class="text-sm font-bold text-white">Вставка в functions.php вашей темы</span>
+                                </div>
+                                <button onclick="copySnippet('wp-fn-code')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                    Копировать PHP код
+                                </button>
+                            </div>
+                            <pre id="wp-fn-code" class="p-4 bg-slate-900/90 rounded-xl text-xs font-mono text-cyan-300 overflow-x-auto custom-scrollbar border border-slate-800"><?= htmlspecialchars($auditResult['wordpress_integration']['functions_php_code'], ENT_QUOTES, 'UTF-8') ?></pre>
                         </div>
                     </div>
                 </div>
@@ -522,7 +661,7 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-800/80 bg-slate-950/80 py-6 text-center text-xs text-slate-500">
+    <footer class="border-t border-slate-800/80 bg-slate-950/80 py-6 text-center text-xs text-slate-500 no-print">
         <p>SEO Sentinel • Полнофункциональный AI & GEO аудит на чистом PHP 8.2 • Разработано для портфолио</p>
     </footer>
 
@@ -543,7 +682,6 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
                 btnHtml.classList.add('bg-brand-600', 'text-white', 'shadow');
                 btnHtml.classList.remove('text-slate-400');
 
-                // Sync inputs if available
                 const val = document.getElementById('input-url').value;
                 if (val && !document.getElementById('input-url-custom').value) {
                     document.getElementById('input-url-custom').value = val;
@@ -558,7 +696,6 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
             }
         }
 
-        // Before submit, sync fields if in html mode
         document.getElementById('audit-form').addEventListener('submit', function() {
             const mode = document.getElementById('input-mode').value;
             if (mode === 'html') {
@@ -568,6 +705,29 @@ if (!empty($targetUrl) || !empty($rawHtml)) {
                 if (customKw) document.querySelector('input[name="keyword"]').value = customKw;
             }
         });
+
+        function switchSerp(engine) {
+            const googleCard = document.getElementById('serp-google-card');
+            const yandexCard = document.getElementById('serp-yandex-card');
+            const btnGoogle = document.getElementById('btn-serp-google');
+            const btnYandex = document.getElementById('btn-serp-yandex');
+
+            if (engine === 'google') {
+                googleCard.classList.remove('hidden');
+                yandexCard.classList.add('hidden');
+                btnGoogle.classList.add('bg-brand-600', 'text-white');
+                btnGoogle.classList.remove('text-slate-400');
+                btnYandex.classList.remove('bg-brand-600', 'text-white');
+                btnYandex.classList.add('text-slate-400');
+            } else {
+                yandexCard.classList.remove('hidden');
+                googleCard.classList.add('hidden');
+                btnYandex.classList.add('bg-brand-600', 'text-white');
+                btnYandex.classList.remove('text-slate-400');
+                btnGoogle.classList.remove('bg-brand-600', 'text-white');
+                btnGoogle.classList.add('text-slate-400');
+            }
+        }
 
         function setSample(url, kw) {
             setMode('url');
