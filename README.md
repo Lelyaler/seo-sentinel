@@ -1,104 +1,130 @@
 # SEO Sentinel — AI Search & GEO Copilot 🛡️🚀
 
 > **Next-Gen Multi-Agent SEO & Generative Engine Optimization Platform**  
-> *Полнофункциональная платформа глубокого SEO-аудита, анализа конкурентов в поисковой выдаче и оптимизации под AI-поисковики (GEO: Perplexity, ChatGPT, Google AI Overviews).*
+> *Инженерная мультиагентная платформа глубокого технического SEO-аудита, анализа поисковых лидеров и оптимизации под AI-поисковики (GEO: Perplexity, ChatGPT, Google AI Overviews).*
+
+[![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=flat-square&logo=php&logoColor=white)](https://php.net)
+[![Architecture](https://img.shields.io/badge/Architecture-OOP%20%7C%20PSR--4-blue?style=flat-square)](#-архитектура-и-стек-технологий)
+[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero%20(Native%20Only)-success?style=flat-square)](#)
+[![Agentic Engineering](https://img.shields.io/badge/Agentic-AGENTS.md%20%2B%20Skills-purple?style=flat-square)](#-агентная-система-агенты-правила-и-скиллы)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 ---
 
 ## 📌 О проекте
 
-**SEO Sentinel** — это современный инженерный инструмент для SEO-специалистов, веб-разработчиков и владельцев бизнеса. 
+В 2025–2026 годах классического SEO с подбором плотности ключей больше недостаточно. Поисковые алгоритмы Google и Яндекса переходят к **GEO (Generative Engine Optimization)**, а миллионы пользователей ищут информацию напрямую через **Perplexity, ChatGPT Search и Google AI Overviews**.
 
-В 2025–2026 годах классического SEO недостаточно: алгоритмы переходят к **GEO (Generative Engine Optimization)**. Если страница не структурирована под извлечение сущностей, ИИ-поисковики (Perplexity, ChatGPT Search, Gemini) не включают сайт в свои ответы. 
+Если веб-страница не структурирована под извлечение сущностей, в ней нет вопросно-ответной структуры (Q&A), таблиц и семантической микроразметки `JSON-LD`, нейросети **игнорируют сайт** и рекомендуют конкурентов.
 
-**SEO Sentinel** автоматизирует рутину, на которую уходит 2–3 часа работы SEO-специалиста:
-1. 🔍 **Аудит страницы и мета-данных** (Title, Meta Description, OpenGraph, канонические ссылки, заголовки H1-H6, ALT у картинок).
-2. 📊 **Анализ упущенного контента (Content Gap)** в сравнении со стандартами ТОП-3 поисковой выдачи (блоки цен, FAQ, гарантий, этапов работ).
-3. 🧩 **Автогенерация валидной микроразметки Schema.org (JSON-LD)** (`FAQPage`, `Service`, `BreadcrumbList`) с возможностью копирования в 1 клик.
-4. 🤖 **Индекс готовности к AI-поиску (GEO Score)**: оценка фактологической плотности, вопросно-ответной структуры (Q&A) и сигналов E-E-A-T.
+**SEO Sentinel** решает эту задачу автономно:
+1. 🔍 **Мгновенный On-Page & DOM аудит**: Анализ мета-тегов, иерархии H1-H6, ALT у картинок, канонических ссылок (`canonical`) и скорости отклика (TTFB).
+2. 📊 **Анализ упущенного контента (Content Gap)**: Сравнение страницы с обязательными смысловыми блоками лидеров поисковой выдачи (блоки цен, FAQ, гарантий, этапов работ).
+3. 🤖 **Индекс готовности к AI-поиску (GEO Score)**: Оценка фактологической плотности и цитируемости в ответах LLM-моделей.
+4. 🧩 **Автогенерация валидной микроразметки Schema.org**: Создание готового `JSON-LD` (`FAQPage`, `Service`, `BreadcrumbList`) в 1 клик.
+5. 🔍 **Живая симуляция сниппета SERP**: Визуализация отображения страницы в Google и Яндексе с детекцией обрезки заголовков Title (> 60 симв.).
+6. 📝 **Генератор ТЗ копирайтеру & AI-промптов**: Автоматическое ТЗ с LSI-ключами и системным промптом для ChatGPT/Claude.
+7. 🔌 **WordPress Интеграция**: Готовый PHP-код для хука `wp_head` в `functions.php` без сторонних плагинов.
+8. 🛡️ **Обход Cloudflare WAF / Капчи**: Поддержка режима прямого анализа по вставке «сырого» HTML-кода со страниц под защитой.
+9. 🖨️ **Экспорт коммерческого аудита в PDF**: Чистые print-стили для мгновенной печати отчетов для клиентов веб-студии.
+
+---
+
+## 🤖 Агентная система: Агенты, Правила и Скиллы
+
+Проект спроектирован по парадигме **Agentic Coding** в среде **Antigravity CLI**:
+
+```mermaid
+flowchart TD
+    User([Пользователь / Тимлид]) <--> Orchestrator[Главный Агент-Оркестратор]
+
+    subgraph KnowledgeBase [База знаний и контекст]
+        AgentsMD[AGENTS.md: Стандарты PHP 8.2, типизация, SSRF защита]
+        SkillAnalyzer[.agents/skills/seo-analyzer: Регламент DOM-аудита]
+        SkillSchema[.agents/skills/schema-generator: Спецификация Rich Results]
+        SkillGEO[.agents/skills/geo-evaluator: Критерии AI-ранжирования]
+        SkillBrief[.agents/skills/copywriter-brief: Регламент генерации ТЗ]
+    end
+
+    subgraph Subagents [Специализированные Суб-агенты]
+        CrawlerAgent[1. DOM Crawler: Парсинг XPath и мета-тегов]
+        GapAgent[2. Competitor Gap Agent: Сравнение с ТОП выдачи]
+        GeoAgent[3. GEO Agent: Расчет готовности к ответам нейросетей]
+        SchemaAgent[4. Schema Architect: Генератор Schema.org JSON-LD]
+        WpAgent[5. WordPress Agent: Генератор функций для wp_head]
+    end
+
+    Orchestrator --> Subagents
+    Subagents -.-> KnowledgeBase
+```
+
+### 1. Системные правила (`AGENTS.md`)
+Файл `AGENTS.md` в корне репозитория задает обязательные правила для любого ИИ-агента, работающего с проектом:
+- Строгая типизация PHP 8.2 (`declare(strict_types=1);`).
+- Защита от SSRF при выполнении HTTP-запросов.
+- Использование пользовательских исключений `SeoException`.
+- Нулевые внешние зависимости (Zero Dependencies).
+
+### 2. Модульные Скиллы (`.agents/skills/`)
+Каждый скилл — это отдельный регламент процедуры (runbook):
+- **`seo-analyzer`**: Правила длины Title (40–65 симв.), Description (120–160 симв.), валидация канонических ссылок.
+- **`schema-generator`**: Спецификации Google Rich Results для разметки `FAQPage`, `Service`, `BreadcrumbList`.
+- **`geo-evaluator`**: Чек-лист цитируемости RAG-системами (вопросно-ответные заголовки, таблицы, списки, E-E-A-T).
+- **`copywriter-brief`**: Алгоритм расчета дефицита слов и сборки промпта для копирайтера.
 
 ---
 
 ## 🏗️ Архитектура и стек технологий
 
-Проект разработан в парадигме **Agentic Engineering** с использованием **Antigravity CLI**:
-- **Язык:** Чистый **PHP 8.2+** со строгой типизацией (`declare(strict_types=1);`), ООП и автозагрузкой по стандарту **PSR-4**.
-- **Нулевые внешние зависимости:** Максимальная производительность и безопасность за счет нативных модулей PHP (`dom`, `libxml`, `curl`, `json`, `mbstring`).
-- **Фронтенд:** Интерактивный дашборд на **Tailwind CSS**, оптимизированный для мобильных устройств и десктопа.
-- **REST API:** Поддержка получения данных в формате JSON для интеграции с внешними микросервисами и агентами.
-
-```mermaid
-flowchart TD
-    User([Пользователь: URL + Ключевик]) --> WebUI[Интерактивный Web Dashboard / CLI]
-    WebUI --> Service[AuditService Orchestrator]
-
-    subgraph Core [Ядро анализаторов]
-        Crawler[PageCrawler: DOMDocument & XPath]
-        Comparator[CompetitorAnalyzer: Content Gap & LSI]
-        Generator[SchemaGenerator: JSON-LD Builder]
-        Scorer[GeoScorer: Generative Engine Readiness]
-    end
-
-    subgraph KnowledgeBase [Агентные правила и регламенты]
-        AgentsMD[AGENTS.md: Стандарты разработки]
-        SkillAnalyzer[.agents/skills/seo-analyzer]
-        SkillSchema[.agents/skills/schema-generator]
-        SkillGEO[.agents/skills/geo-evaluator]
-    end
-
-    Service --> Crawler
-    Service --> Comparator
-    Service --> Generator
-    Service --> Scorer
-
-    Crawler -.-> SkillAnalyzer
-    Generator -.-> SkillSchema
-    Scorer -.-> SkillGEO
-
-    Service --> Result[Сводный аналитический отчет + JSON-LD]
-    Result --> WebUI
-```
+- **Язык:** PHP 8.2+ (CLI & Web через Docker).
+- **Стандарты:** ООП, Пространство имен `SeoSentinel\...`, автозагрузка **PSR-4**.
+- **Нулевые зависимости:** Использованы нативные высокопроизводительные C-модули PHP (`dom`, `libxml`, `curl`, `json`, `mbstring`). Никаких тяжелых node_modules или вендоров.
+- **Фронтенд:** Tailwind CSS (CDN), Google Fonts, Lucide Icons, мобильная адаптивность, стили `@media print`.
+- **API:** Встроенный REST API (`?api=1` или заголовок `Accept: application/json`).
 
 ---
 
-## 📂 Структура проекта
+## 📂 Структура репозитория
 
 ```text
 ├── .agents/
 │   └── skills/
-│       ├── seo-analyzer/SKILL.md      # Регламент технического анализа DOM и мета-данных
-│       ├── schema-generator/SKILL.md  # Спецификация валидации микроразметки Google Rich Results
-│       └── geo-evaluator/SKILL.md     # Чек-лист ранжирования в Generative AI Search
+│       ├── copywriter-brief/SKILL.md  # Регламент формирования ТЗ и AI-промптов
+│       ├── geo-evaluator/SKILL.md     # Чек-лист ранжирования в Generative AI Search
+│       ├── schema-generator/SKILL.md  # Спецификация валидации микроразметки Google
+│       ├── seo-analyzer/SKILL.md      # Регламент технического анализа DOM
+│       └── wp-block/SKILL.md          # Скилл создания Gutenberg-блоков
 ├── bin/
-│   └── seo-sentinel                   # Исполняемый консольный CLI-скрипт
+│   └── seo-sentinel                   # Консольная CLI-утилита для терминала
 ├── public/
-│   └── index.php                      # Веб-дашборд и REST API эндпоинт
+│   └── index.php                      # Интерактивный Web-дашборд и JSON API
 ├── src/
 │   ├── Analyzer/
 │   │   ├── CompetitorAnalyzer.php     # Анализ поискового бенчмарка и Content Gap
-│   │   └── PageCrawler.php            # Парсер HTML через DOM & XPath
+│   │   └── PageCrawler.php            # Парсер HTML через DOMDocument & XPath
 │   ├── Evaluator/
 │   │   └── GeoScorer.php              # Оценка цитируемости в Perplexity/ChatGPT
 │   ├── Exception/
 │   │   └── SeoException.php           # Пользовательские исключения
 │   ├── Generator/
-│   │   └── SchemaGenerator.php        # Генератор JSON-LD разметки
+│   │   ├── CopywriterBriefGenerator.php # Генератор ТЗ и промптов для ChatGPT
+│   │   ├── SchemaGenerator.php        # Генератор валидного JSON-LD
+│   │   ├── SerpPreviewData.php        # Симулятор сниппета выдачи Google/Яндекс
+│   │   └── WordPressIntegrationGenerator.php # Генератор кода для functions.php
 │   ├── Http/
-│   │   └── Client.php                 # Защищенный cURL-клиент (SSRF Protection)
+│   │   └── Client.php                 # Безопасный cURL-клиент (WAF/Cloudflare detector)
 │   ├── Service/
-│   │   └── AuditService.php           # Главный сервис-оркестратор
-│   └── autoload.php                   # PSR-4 автозагрузчик
+│   │   └── AuditService.php           # Сервис-оркестратор полного аудита
+│   └── autoload.php                   # PSR-4 автозагрузчик классов
 ├── AGENTS.md                          # Контекстные инструкции для ИИ-агентов
 └── README.md
 ```
 
 ---
 
-## 🚀 Как запустить проект
+## 🚀 Быстрый старт
 
-### Вариант 1: Запуск интерактивного Веб-Дашборда
-
-Сервер запускается в Docker на базе PHP 8.2:
+### 1. Запуск интерактивного Веб-Дашборда
 
 ```bash
 docker run -d --name seo_sentinel_web --net=host -v "$PWD:/app" -w /app wordpress:6.6-php8.2-apache php -S 0.0.0.0:8000 -t public
@@ -106,13 +132,13 @@ docker run -d --name seo_sentinel_web --net=host -v "$PWD:/app" -w /app wordpres
 
 Откройте в браузере: **`http://localhost:8000`**
 
-### Вариант 2: Запуск через консольный CLI
+### 2. Запуск консольного аудита (CLI)
 
 ```bash
 docker run --rm --net=host -v "$PWD:/app" -w /app wordpress:6.6-php8.2-apache php bin/seo-sentinel analyze https://wordpress.org --keyword="content management system"
 ```
 
-### Вариант 3: Использование в качестве REST API
+### 3. Использование в качестве REST API
 
 ```bash
 curl -s "http://localhost:8000/?api=1&url=https://wordpress.org&keyword=cms"
@@ -120,8 +146,16 @@ curl -s "http://localhost:8000/?api=1&url=https://wordpress.org&keyword=cms"
 
 ---
 
-## 💼 Ценность для портфолио
+## 💼 Коммерческая ценность & Use Cases
 
-- **Демонстрация сильного бэкенда:** Чистый ООП PHP 8.2 без раздутых зависимостей и фреймворков.
-- **Понимание трендов 2026 года:** Реализация алгоритмов **GEO (Generative Engine Optimization)** и структуры **Schema.org**.
-- **Практика Agentic Coding:** Проект спроектирован с использованием контекстных правил (`AGENTS.md`) и модульных скиллов (`.agents/skills/`), демонстрируя продвинутые навыки парного программирования с автономными ИИ-агентами.
+1. **Экспресс-аудиты перед продажей услуг:** Мгновенная генерация PDF-отчетов для клиентов с наглядным списком критических проблем (неверный Canonical, обрезка Title, медленный отклик).
+2. **Внедрение семантической разметки:** Автоматическая генерация кода Schema.org для сайтов клиентов без необходимости нанимать бэкенд-разработчика.
+3. **Подготовка контента нового поколения:** Автоматическое составление ТЗ копирайтерам с учетом требований алгоритмов AI-поиска (Perplexity, ChatGPT).
+4. **Портфолио сеньор-уровня:** Демонстрация глубокого понимания современного чистого PHP 8.2, работы с DOM и методологии Agentic Coding.
+
+---
+
+## 👤 Автор
+
+Разработано: **[Lelyaler](https://github.com/Lelyaler)**  
+Стек: **PHP 8.2 • Modern Web • AI / GEO Optimization • Agentic Engineering**
